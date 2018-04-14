@@ -103,6 +103,3 @@ function checkIfUserIsAuthorized() {
 
 
 module.exports = {trainData, checkIfUserIsAuthorized};
-
-// trainData();
-predictDataDemo()

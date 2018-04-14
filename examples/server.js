@@ -11,6 +11,7 @@ const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const checkIfUserIsAuthorized = require("./faceRecognition1").checkIfUserIsAuthorized;
 const request = require('request');
+const fs = require("fs");
 
  
 // configure app to use bodyParser()
@@ -27,10 +28,11 @@ var router = express.Router();              // get an instance of the express Ro
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 router.get('/', function(req, res) {
-    res.json({ message: 'hooray! welcome to our api!' });   
+    res.send("hello");   
 });
 
 router.post('/checkin', function(req, res) {
+    console.log("Somebody is checking in . . .");
     if (!req.files) {
         return res.status(400).send('No files were uploaded.');
     }
@@ -49,6 +51,7 @@ router.post('/checkin', function(req, res) {
 });
 
 router.post('/checkout', function(req, res) {
+    console.log("Somebody is checking out . . .");
     if (!req.files) {
         return res.status(400).send('No files were uploaded.');
     }
@@ -84,8 +87,28 @@ function checkUser(files, callback) {
 
 }
 
-router.get('/register', function(req, res) {
-    res.json({ message: 'hooray! welcome to our api!' });   
+router.post('/register', function(req, res) {
+    // console.log(req.body.data.toString());
+    const data = JSON.parse(req.body.data.toString());
+    const dirname = './data/faces/' + data.username;
+    console.log(Object.keys(req.files));
+    fs.mkdirSync(dirname);
+    var index = 0;
+    for(var filename in req.files) {
+        const file = req.files[filename];
+        console.log(file);
+        file.mv(`${dirname}/${index}.png`, (err) => {
+            if(err) {
+                console.log(err);
+                res.send("Registration fails");
+                return;
+            }
+        });
+        index++;
+    }
+    setTimeout(() => {
+        res.send("Registration success");
+    }, 3000);
 });
 
 // more routes for our API will happen here
