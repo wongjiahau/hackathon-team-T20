@@ -30,7 +30,9 @@
   },
   "gypfile": true,
   "dependencies": {
+    "body-parser": "^1.18.2",
     "dlib-build": "^0.1.0",
+    "express": "^4.16.3",
     "face-recognition-models": "0.0.0",
     "nan": "^2.7.0",
     "native-node-utils": "0.0.4"
