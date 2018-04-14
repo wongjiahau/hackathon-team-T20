@@ -9,54 +9,57 @@ const {
 fr.winKillProcessOnExit()
 ensureAppdataDirExists()
 
+
 const recognizer = fr.FaceRecognizer()
 
-const numTrainFaces = 5
+const numTrainFaces = 10
 const trainedModelFile = `faceRecognition1Model_t${numTrainFaces}_150.json`
 const trainedModelFilePath = path.resolve(getAppdataPath(), trainedModelFile)
-const classNames = ['sheldon', 'lennard', 'raj', 'howard', 'stuart']
+const PATH = './data/faces/';
+const dataPath = path.resolve(PATH);
+const classNames = fs.readdirSync(dataPath);  //Name of people : E.g. howard, lennard, raj, etc.
 
-function getImagesByClass(classNames) {
-  const dataPath = path.resolve('./data/faces')
-  const allFiles = fs.readdirSync(dataPath)
-  const imagesByClass = classNames.map(c =>
-    allFiles
-      .filter(f => f.includes(c))
-      .map(f => path.join(dataPath, f))
-      .map(fp => fr.loadImage(fp))
-  )
+function getImagesByClass() {
+  const imagesByClass = classNames.map(name => {
+    const allFiles = fs.readdirSync(path.resolve(PATH + name));
+    return allFiles.map(filename => { 
+      return fr.loadImage(PATH + name + "/" + filename);
+    });
+    
+  });
   return imagesByClass;
 }
 
 
+
 function trainData() {
-
-  const imagesByClass = getImagesByClass(classNames);
+  console.log("Training data");
+  const imagesByClass = getImagesByClass();
   const trainDataByClass = imagesByClass.map(imgs => imgs.slice(0, numTrainFaces))
+  recognizer.load(require(trainedModelFilePath));
+  const trainedFaces = recognizer.getDescriptorState().map(x => x.className);
 
-  if (!fs.existsSync(trainedModelFilePath)) {
-    console.log('%s not found, start training recognizer...', trainedModelFile)
-
-    trainDataByClass.forEach((faces, label) => {
-      const name = classNames[label]
+  trainDataByClass.forEach((faces, label) => {
+    const name = classNames[label]
+    if(!trainedFaces.includes(name)) {
+      console.log("Adding faces of " + name + ". . .");
       recognizer.addFaces(faces, name)
-    })
+    }
+  })
 
-    fs.writeFileSync(trainedModelFilePath, JSON.stringify(recognizer.serialize()));
-  } else {
-    console.log('found %s, loading model', trainedModelFile)
-
-  }
-
+  console.log("Training finished. Saving model . . .");
+  fs.writeFileSync(trainedModelFilePath, JSON.stringify(recognizer.serialize()));
+  console.log("FINISHED.");
 }
 
 
 function predictDataDemo() {
   recognizer.load(require(trainedModelFilePath))
+  console.log(recognizer.getDescriptorState().map(x => x.className));
 
   console.log('imported the following descriptors:')
   console.log(recognizer.getDescriptorState())
-  const imagesByClass = getImagesByClass(classNames);
+  const imagesByClass = getImagesByClass();
   const testDataByClass = imagesByClass.map(imgs => imgs.slice(numTrainFaces))
 
   const errors = classNames.map(_ => 0)
@@ -100,3 +103,6 @@ function checkIfUserIsAuthorized() {
 
 
 module.exports = {trainData, checkIfUserIsAuthorized};
+
+// trainData();
+predictDataDemo()
