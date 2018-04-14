@@ -11,7 +11,7 @@ ensureAppdataDirExists()
 
 
 
-const numTrainFaces = 8
+const numTrainFaces = 7
 const trainedModelFile = `faceRecognition1Model_t${numTrainFaces}_150.json`
 const trainedModelFilePath = path.resolve(getAppdataPath(), trainedModelFile)
 const recognizer = fr.FaceRecognizer()
@@ -20,7 +20,7 @@ if(fs.existsSync(trainedModelFilePath)) {
 }
 
 // const PATH = './data/faces/';
-const PATH = './data/sample_faces/';
+const PATH = './data/faces/';
 const dataPath = path.resolve(PATH);
 const classNames = fs.readdirSync(dataPath);  //Name of people : E.g. howard, lennard, raj, etc.
 
@@ -47,7 +47,7 @@ function trainData() {
     const name = classNames[label]
     if(!trainedFaces.includes(name)) {
       console.log("Adding faces of " + name + ". . .");
-      const numJitters = 15; // Augment the data to produce more training
+      const numJitters = 30; // Augment the data to produce more training
       recognizer.addFaces(faces, name, numJitters)
     }
   })
@@ -118,7 +118,7 @@ function checkIfUserIsAuthorized() {
 }
 
 // trainData();
-// predictDataDemo();
+// predictNewlyTrainedData();
 // checkIfUserIsAuthorized();
 
 
