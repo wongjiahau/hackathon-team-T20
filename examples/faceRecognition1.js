@@ -12,7 +12,7 @@ ensureAppdataDirExists()
 
 const recognizer = fr.FaceRecognizer()
 
-const numTrainFaces = 10
+const numTrainFaces = 8
 const trainedModelFile = `faceRecognition1Model_t${numTrainFaces}_150.json`
 const trainedModelFilePath = path.resolve(getAppdataPath(), trainedModelFile)
 const PATH = './data/faces/';
@@ -36,7 +36,9 @@ function trainData() {
   console.log("Training data");
   const imagesByClass = getImagesByClass();
   const trainDataByClass = imagesByClass.map(imgs => imgs.slice(0, numTrainFaces))
-  recognizer.load(require(trainedModelFilePath));
+  if(fs.existsSync(trainedModelFilePath)) {
+    recognizer.load(require(trainedModelFilePath));
+  }
   const trainedFaces = recognizer.getDescriptorState().map(x => x.className);
 
   trainDataByClass.forEach((faces, label) => {
@@ -101,6 +103,9 @@ function checkIfUserIsAuthorized() {
   }
   return null;
 }
+
+// trainData();
+// predictDataDemo();
 
 
 module.exports = {trainData, checkIfUserIsAuthorized};
