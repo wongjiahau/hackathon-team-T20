@@ -10,6 +10,8 @@ const app        = express();                 // define our app using express
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const checkIfUserIsAuthorized = require("./faceRecognition1").checkIfUserIsAuthorized;
+const trainData = require("./faceRecognition1").trainData;
+const predictNewlyTrainedData = require("./faceRecognition1").predictNewlyTrainedData;
 const request = require('request');
 const fs = require("fs");
 
@@ -34,6 +36,7 @@ router.get('/', function(req, res) {
 router.post('/checkin', function(req, res) {
     console.log("Somebody is checking in . . .");
     checkUser(req.body.images, (response) => {
+        console.log("Sending response back to client");
         res.send(response);
         request.post(
             `http://${DEST_IP}:8080/api/checkin`, 
@@ -49,11 +52,9 @@ router.post('/checkin', function(req, res) {
 
 router.post('/checkout', function(req, res) {
     console.log("Somebody is checking out . . .");
-    if (!req.files) {
-        return res.status(400).send('No files were uploaded.');
-    }
-    checkUser(req.files, (response) => {
+    checkUser(req.body.images, (response) => {
         res.send(response);
+        console.log("Sending response back to client");
         request.post(
             `http://${DEST_IP}:8080/api/checkout`, 
             {json: response},
@@ -75,34 +76,46 @@ function checkUser(base64Image, callback) {
         }
         var username = checkIfUserIsAuthorized()
         const response = username ? 
-            {status : "SUCCESS", data: {username: username}, timestamp: new Date().getTime()} :
+            {status : "OK", data: {username: username}, timestamp: new Date().getTime()} :
             {status : "FAIL", timestamp: new Date().getTime()};
         callback(response);
     })
 }
 
-router.post('/register', function(req, res) {
-    // console.log(req.body.data.toString());
+var CURRENT_USER = null;
+router.post('/uploadUserData', (req, res) => {
     const data = JSON.parse(req.body.data.toString());
     const dirname = './data/faces/' + data.username;
-    console.log(Object.keys(req.files));
-    fs.mkdirSync(dirname);
-    var index = 0;
-    for(var filename in req.files) {
-        const file = req.files[filename];
-        console.log(file);
-        file.mv(`${dirname}/${index}.png`, (err) => {
-            if(err) {
-                console.log(err);
-                res.send("Registration fails");
-                return;
-            }
-        });
-        index++;
+    if(!fs.existsSync(dirname)) {
+        fs.mkdirSync(dirname);
+        res.send({"status": "OK"});
+    } else {
+        res.send({"status": "FAIL", "data": {"message": "User existed"}});
     }
+})
+
+router.post('/uploadUserFace', function(req, res) {
+    if(!CURRENT_USER) {
+        res.send({"status": "FAIL", "data": {"message": "Username is not provided"}});
+        return;
+    }
+
+    const data = JSON.parse(req.body.data.toString());
+    const dirname = './data/faces/' + data.username + "/" + (new Date().getTime());
+    fs.writeFile(dirname, req.body.images, 'base64', function(err) {
+        if(err) {
+            console.log(err);
+            res.send(err);
+        }
+    });
     setTimeout(() => {
         res.send("Registration success");
     }, 3000);
+});
+
+router.post("/trainUserFace", function(req, res) {
+    trainData();
+    predictNewlyTrainedData();
 });
 
 // more routes for our API will happen here

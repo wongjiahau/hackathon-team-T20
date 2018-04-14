@@ -58,7 +58,7 @@ function trainData() {
 }
 
 
-function predictDataDemo() {
+function predictNewlyTrainedData() {
   console.log(recognizer.getDescriptorState().map(x => x.className));
 
   console.log('imported the following descriptors:')
@@ -122,4 +122,4 @@ function checkIfUserIsAuthorized() {
 // checkIfUserIsAuthorized();
 
 
-module.exports = {trainData, checkIfUserIsAuthorized};
+module.exports = {trainData, checkIfUserIsAuthorized, predictNewlyTrainedData};
