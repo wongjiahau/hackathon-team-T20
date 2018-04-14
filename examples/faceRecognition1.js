@@ -98,20 +98,28 @@ function checkIfUserIsAuthorized() {
   const detector = fr.FaceDetector()
   console.log('detecting faces')
   const faceSize = 150
+  console.log(imagePath);
   const faces = detector.detectFaces(fr.loadImage(imagePath), faceSize);
+  if(faces.length < 1) {
+    console.log("No faces detected");
+    return null;
+  }
   fr.saveImage(imagePath, faces[0]);
   recognizer.load(require(trainedModelFilePath));
   const prediction = recognizer.predictBest(faces[0]);
   console.log(prediction);
   const CUT_POINT = 0.45; // The CUT_POINT is defined based on heuristic
   if(prediction.distance < CUT_POINT) {
+    console.log("Face recognized.");
     return prediction.className;
   }
+  console.log("Unrecognized faced");
   return null;
 }
 
 // trainData();
 // predictDataDemo();
+// checkIfUserIsAuthorized();
 
 
 module.exports = {trainData, checkIfUserIsAuthorized};
