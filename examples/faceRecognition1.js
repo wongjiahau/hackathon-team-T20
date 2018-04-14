@@ -94,6 +94,7 @@ function checkIfUserIsAuthorized() {
   recognizer.load(require(trainedModelFilePath))
 
   const prediction = recognizer.predictBest(faceToBeClassified);
+  console.log(prediction);
   const CUT_POINT = 0.6; // The CUT_POINT is defined based on heuristic
   if(prediction.distance < CUT_POINT) {
     return prediction.className;

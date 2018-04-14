@@ -16,8 +16,8 @@ const fs = require("fs");
  
 // configure app to use bodyParser()
 // this will let us get the data from a POST
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+app.use(bodyParser.json({limit: '50mb'}));
 app.use(fileUpload());
 
 var port = process.env.PORT || 8080;        // set our port
@@ -33,10 +33,7 @@ router.get('/', function(req, res) {
 
 router.post('/checkin', function(req, res) {
     console.log("Somebody is checking in . . .");
-    if (!req.files) {
-        return res.status(400).send('No files were uploaded.');
-    }
-    checkUser(req.files, (response) => {
+    checkUser(req.body.images, (response) => {
         res.send(response);
         request.post(
             `http://${DEST_IP}:8080/api/checkin`, 
@@ -69,22 +66,19 @@ router.post('/checkout', function(req, res) {
     })
 });
 
-function checkUser(files, callback) {
-    for(var filename in files) {
-        const file = files[filename];
-        file.mv('./toBeClassified/temp.png', (err) => {
-            if(err) {
-                console.log(err);
-                return;
-            }
-            var username = checkIfUserIsAuthorized()
-            const response = username ? 
-                {status : "SUCCESS", data: {username: username}, timestamp: new Date().getTime()} :
-                {status : "FAIL", timestamp: new Date().getTime()};
-            callback(response);
-        });
-    }
-
+function checkUser(base64Image, callback) {
+    const base64Data = base64Image;
+    require("fs").writeFile("./toBeClassified/temp.png", base64Data, 'base64', function(err) {
+        if(err) {
+            console.log(err);
+            return;
+        }
+        var username = checkIfUserIsAuthorized()
+        const response = username ? 
+            {status : "SUCCESS", data: {username: username}, timestamp: new Date().getTime()} :
+            {status : "FAIL", timestamp: new Date().getTime()};
+        callback(response);
+    })
 }
 
 router.post('/register', function(req, res) {
