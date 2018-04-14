@@ -8,9 +8,12 @@ const frontalDetector = new fr.FrontalFaceDetector()
 
 /**
  * 
- * @param  directory : Must end with '/'
+ * @param  directory: string . Must end with '/'
  */
 function cropFaceOut(directory) {
+    if(!directory.endsWith('/')) {
+        throw new Error("Directory must end with '/'");
+    }
     console.log(directory);
     fs.readdirSync(directory).forEach(path => {
         const img = fr.loadImage(directory + path);
