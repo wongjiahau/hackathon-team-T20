@@ -10,12 +10,17 @@ fr.winKillProcessOnExit()
 ensureAppdataDirExists()
 
 
-const recognizer = fr.FaceRecognizer()
 
 const numTrainFaces = 8
 const trainedModelFile = `faceRecognition1Model_t${numTrainFaces}_150.json`
 const trainedModelFilePath = path.resolve(getAppdataPath(), trainedModelFile)
-const PATH = './data/faces/';
+const recognizer = fr.FaceRecognizer()
+if(fs.existsSync(trainedModelFilePath)) {
+  recognizer.load(require(trainedModelFilePath));
+}
+
+// const PATH = './data/faces/';
+const PATH = './data/sample_faces/';
 const dataPath = path.resolve(PATH);
 const classNames = fs.readdirSync(dataPath);  //Name of people : E.g. howard, lennard, raj, etc.
 
@@ -36,16 +41,14 @@ function trainData() {
   console.log("Training data");
   const imagesByClass = getImagesByClass();
   const trainDataByClass = imagesByClass.map(imgs => imgs.slice(0, numTrainFaces))
-  if(fs.existsSync(trainedModelFilePath)) {
-    recognizer.load(require(trainedModelFilePath));
-  }
   const trainedFaces = recognizer.getDescriptorState().map(x => x.className);
 
   trainDataByClass.forEach((faces, label) => {
     const name = classNames[label]
     if(!trainedFaces.includes(name)) {
       console.log("Adding faces of " + name + ". . .");
-      recognizer.addFaces(faces, name)
+      const numJitters = 15; // Augment the data to produce more training
+      recognizer.addFaces(faces, name, numJitters)
     }
   })
 
@@ -56,7 +59,6 @@ function trainData() {
 
 
 function predictDataDemo() {
-  recognizer.load(require(trainedModelFilePath))
   console.log(recognizer.getDescriptorState().map(x => x.className));
 
   console.log('imported the following descriptors:')
@@ -92,12 +94,16 @@ function predictDataDemo() {
 }
 
 function checkIfUserIsAuthorized() {
-  const faceToBeClassified = fr.loadImage('./toBeClassified/temp.png');
-  recognizer.load(require(trainedModelFilePath))
-
-  const prediction = recognizer.predictBest(faceToBeClassified);
+  const imagePath = './toBeClassified/temp.png';
+  const detector = fr.FaceDetector()
+  console.log('detecting faces')
+  const faceSize = 150
+  const faces = detector.detectFaces(fr.loadImage(imagePath), faceSize);
+  fr.saveImage(imagePath, faces[0]);
+  recognizer.load(require(trainedModelFilePath));
+  const prediction = recognizer.predictBest(faces[0]);
   console.log(prediction);
-  const CUT_POINT = 0.6; // The CUT_POINT is defined based on heuristic
+  const CUT_POINT = 0.45; // The CUT_POINT is defined based on heuristic
   if(prediction.distance < CUT_POINT) {
     return prediction.className;
   }
