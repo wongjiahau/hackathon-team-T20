@@ -76,7 +76,7 @@ function checkUser(base64Image, callback) {
         var username = checkIfUserIsAuthorized()
         const response = username ? 
             {status : "OK", data: {username: username}, timestamp: new Date().getTime()} :
-            {status : "FAIL", timestamp: new Date().getTime()};
+            {status : "FAIL", data: {image: base64Image}, timestamp: new Date().getTime()};
         callback(response);
     })
 }
