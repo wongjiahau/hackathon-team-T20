@@ -8,6 +8,7 @@ const detector = fr.FaceDetector()
 // const DIR = './data/sample_faces/jiahau/'
 
 function cropFaceOut(directory) {
+    console.log(directory);
     fs.readdirSync(directory).forEach(path => {
         const img = fr.loadImage(directory + path);
 
@@ -15,9 +16,7 @@ function cropFaceOut(directory) {
         const faceSize = 150
         const faces = detector.detectFaces(img, faceSize)
         if(faces.length == 1) {
-            // faces.forEach((face, index) => {
-            fr.saveImage(directory + (new Date().getTime()) + '.png', faces[0]);
-            // })
+            fr.saveImage(directory + path, faces[0]);
         }
     });
 }

@@ -97,6 +97,7 @@ router.post('/uploadUserData', (req, res) => {
 })
 
 router.post('/uploadUserFace', function(req, res) {
+    console.log("uploading user face");
     if(!CURRENT_USER) {
         res.send({"status": "FAIL", "data": {"message": "Username is not provided"}});
         return;
@@ -115,8 +116,14 @@ router.post('/uploadUserFace', function(req, res) {
 });
 
 router.post("/registerUserFace", function(req, res) {
-    cropFaceOut('/data/faces/' + CURRENT_USER);
+    console.log("Registering new user face");
+    console.log("Cropping user face");
+    cropFaceOut("./data/faces/" + CURRENT_USER + "/");
+
+    console.log("Training data with new face");
     trainData();
+
+    console.log("Predicting newly trained data");
     predictNewlyTrainedData();
 });
 
