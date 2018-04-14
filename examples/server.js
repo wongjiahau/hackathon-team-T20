@@ -1,5 +1,3 @@
-// server.js
-
 // BASE SETUP
 // =============================================================================
 const DEST_IP = '192.168.20.107';
@@ -12,6 +10,7 @@ const fileUpload = require('express-fileupload');
 const checkIfUserIsAuthorized = require("./faceRecognition1").checkIfUserIsAuthorized;
 const trainData = require("./faceRecognition1").trainData;
 const predictNewlyTrainedData = require("./faceRecognition1").predictNewlyTrainedData;
+const cropFaceOut = require("./faceDetection").cropFaceOut;
 const request = require('request');
 const fs = require("fs");
 
@@ -35,7 +34,7 @@ router.get('/', function(req, res) {
 
 router.post('/checkin', function(req, res) {
     console.log("Somebody is checking in . . .");
-    checkUser(req.body.images, (response) => {
+    checkUser(req.body.image, (response) => {
         console.log("Sending response back to client");
         res.send(response);
         request.post(
@@ -52,7 +51,7 @@ router.post('/checkin', function(req, res) {
 
 router.post('/checkout', function(req, res) {
     console.log("Somebody is checking out . . .");
-    checkUser(req.body.images, (response) => {
+    checkUser(req.body.image, (response) => {
         res.send(response);
         console.log("Sending response back to client");
         request.post(
@@ -84,14 +83,17 @@ function checkUser(base64Image, callback) {
 
 var CURRENT_USER = null;
 router.post('/uploadUserData', (req, res) => {
-    const data = JSON.parse(req.body.data.toString());
-    const dirname = './data/faces/' + data.username;
+    console.log("User is uploading data");
+    const username = req.body.username;
+    console.log("Name of user = " + username);
+    const dirname = './data/faces/' + username;
     if(!fs.existsSync(dirname)) {
         fs.mkdirSync(dirname);
         res.send({"status": "OK"});
     } else {
         res.send({"status": "FAIL", "data": {"message": "User existed"}});
     }
+    CURRENT_USER = username;
 })
 
 router.post('/uploadUserFace', function(req, res) {
@@ -100,9 +102,8 @@ router.post('/uploadUserFace', function(req, res) {
         return;
     }
 
-    const data = JSON.parse(req.body.data.toString());
-    const dirname = './data/faces/' + data.username + "/" + (new Date().getTime());
-    fs.writeFile(dirname, req.body.images, 'base64', function(err) {
+    const dirname = './data/faces/' + CURRENT_USER + "/" + (new Date().getTime()) + ".png";
+    fs.writeFile(dirname, req.body.image, 'base64', function(err) {
         if(err) {
             console.log(err);
             res.send(err);
@@ -113,7 +114,8 @@ router.post('/uploadUserFace', function(req, res) {
     }, 3000);
 });
 
-router.post("/trainUserFace", function(req, res) {
+router.post("/registerUserFace", function(req, res) {
+    cropFaceOut('/data/faces/' + CURRENT_USER);
     trainData();
     predictNewlyTrainedData();
 });
